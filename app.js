@@ -6,13 +6,31 @@
   const $ = s => document.querySelector(s);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-  /* ---------- 文案（中 / 英） ---------- */
+  /* ---------- 文案（中 / 英 / 马来文） ---------- */
+  const MS_MON = ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ogo', 'Sep', 'Okt', 'Nov', 'Dis'];
+  const MS_DAY = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
+  const LANGS = [['zh', '中文'], ['en', 'English'], ['ms', 'Bahasa Melayu']];
   const I = {
     zh: {
       tabToday: '今天', tabRx: '处方', tabDiary: '日记', tabMe: '我的',
       hello: n => (n ? n + '，' : '') + '你好',
+      weekday: s => '星期' + '日一二三四五六'[parseYmd(s).getDay()],
+      notes: {}, listSep: '、',
+      g: {
+        crush: j => j + ' 煎前先打碎。',
+        bag: j => j + ' 装进纱布袋扎紧，和其他药一起煎。',
+        soak: ex => '把药' + (ex ? '（' + ex + ' 除外）' : '') + '放进锅里，加冷水没过药面 2–3 厘米，浸泡 30 分钟。',
+        pre: j => j + ' 要先煎：先放进锅里，煮沸后小火煎 30 分钟，再放入其他药。',
+        boil: '大火煮沸后转小火，保持微微沸腾 20–30 分钟。',
+        late: j => j + ' 要后下：关火前 5–10 分钟才放进去。',
+        second: '倒出药液。再加水没过药面，煮沸后小火煎 15–20 分钟，倒出第二遍药液。',
+        sep: j => j + ' 用小锅单独煎，取汁兑入药液。',
+        mix: n => '两遍药液混合（约 300–400 毫升），' + (n === 1 ? '一次温服。' : '分 ' + n + ' 次温服。'),
+        melt: j => j + ' 不下锅：放在杯里，用热药液搅拌溶化后服。',
+        stir: j => j + ' 不下锅：服药时用温热药液冲服。'
+      },
       noRxTitle: '还没有处方',
-      noRxText: '看诊后，医生会在微信里发给你一个处方链接。点开它，处方就会保存在这里，帮你记住每天服药、煎药方法和复诊时间。',
+      noRxText: '看诊后，医生会发给你一个处方链接。点开它，处方就会保存在这里，帮你记住每天服药、煎药方法和复诊时间。',
       demo: '看看示例', demoTag: '示例',
       courseDay: (n, m) => '第 ' + n + ' 天 / 共 ' + m + ' 天',
       upcoming: d => d + ' 开始服药',
@@ -65,12 +83,28 @@
       fmtMD: s => { const d = parseYmd(s); return (d.getMonth() + 1) + '/' + d.getDate(); },
       sum: {
         title: '【复诊小结】', rx: '处方', from: '开方', took: (a, b, m) => '服药：已服 ' + a + ' / 应服 ' + b + ' 次' + (m ? '，漏服 ' + m + ' 次' : ''),
-        start: s => s + ' 开始服药', feel: '每日感觉', log: '日记', gen: '—— 由「随诊本」生成'
+        start: s => s + ' 开始服药', feel: '每日感觉', log: '日记', gen: '—— 由「随诊本」生成', photos: n => '舌象照片 ' + n + ' 张'
       }
     },
     en: {
       tabToday: 'Today', tabRx: 'Herbs', tabDiary: 'Diary', tabMe: 'Me',
       hello: n => 'Hello' + (n ? ', ' + n : ''),
+      weekday: s => parseYmd(s).toLocaleDateString('en-US', { weekday: 'long' }),
+      notes: { '先煎': 'cook first', '后下': 'add late', '包煎': 'in a bag', '烊化': 'dissolve', '冲服': 'stir in', '另煎': 'cook separately', '打碎': 'crush' }, listSep: ', ',
+      herbNamesNote: 'Herb names are kept in Chinese so the pharmacy can match them exactly.',
+      g: {
+        crush: j => 'Crush ' + j + ' before cooking.',
+        bag: j => 'Put ' + j + ' into a cloth/gauze bag and tie it; cook it with the other herbs.',
+        soak: ex => 'Put the herbs' + (ex ? ' (except ' + ex + ')' : '') + ' in the pot, add cold water 2–3 cm above the herbs and soak for 30 minutes.',
+        pre: j => 'Cook ' + j + ' FIRST: bring to a boil, then simmer 30 minutes before adding the other herbs.',
+        boil: 'Bring to a boil on high heat, then simmer gently on low heat for 20–30 minutes.',
+        late: j => 'Add ' + j + ' only in the LAST 5–10 minutes.',
+        second: 'Strain out the liquid. Add water again (just covering the herbs), boil and simmer 15–20 minutes for a second batch, then strain.',
+        sep: j => 'Cook ' + j + ' separately in a small pot and add its liquid to the decoction.',
+        mix: n => 'Mix both batches (about 300–400 ml) and drink warm' + (n === 1 ? ' in one serving.' : ', split into ' + n + ' servings.'),
+        melt: j => 'Do not cook ' + j + ': put it in a cup and stir it into the hot decoction until dissolved.',
+        stir: j => 'Do not cook ' + j + ': stir it into the warm decoction when drinking.'
+      },
       noRxTitle: 'No prescription yet',
       noRxText: 'After your visit, your doctor will send you a prescription link. Open it and the prescription is saved here — with daily dose check-ins, how to cook the herbs, and your follow-up date.',
       demo: 'See an example', demoTag: 'Example',
@@ -125,12 +159,86 @@
       fmtMD: s => { const d = parseYmd(s); return (d.getMonth() + 1) + '/' + d.getDate(); },
       sum: {
         title: '[Follow-up summary]', rx: 'Prescription', from: 'prescribed', took: (a, b, m) => 'Doses: ' + a + ' of ' + b + ' taken' + (m ? ', ' + m + ' missed' : ''),
-        start: s => 'started ' + s, feel: 'Daily feeling', log: 'Diary', gen: '— from Care Notebook'
+        start: s => 'started ' + s, feel: 'Daily feeling', log: 'Diary', gen: '— from Care Notebook', photos: n => 'tongue photo ×' + n
+      }
+    },
+    ms: {
+      tabToday: 'Hari ini', tabRx: 'Herba', tabDiary: 'Diari', tabMe: 'Saya',
+      hello: n => 'Hai' + (n ? ', ' + n : ''),
+      weekday: s => MS_DAY[parseYmd(s).getDay()],
+      notes: { '先煎': 'rebus dahulu', '后下': 'masuk kemudian', '包煎': 'dalam uncang', '烊化': 'larutkan', '冲服': 'kacau masuk', '另煎': 'rebus berasingan', '打碎': 'tumbuk' }, listSep: ', ',
+      herbNamesNote: 'Nama herba dikekalkan dalam bahasa Cina supaya kedai ubat dapat memadankannya dengan tepat.',
+      g: {
+        crush: j => 'Tumbuk ' + j + ' sebelum direbus.',
+        bag: j => 'Masukkan ' + j + ' ke dalam uncang kain/kasa dan ikat; rebus bersama herba lain.',
+        soak: ex => 'Masukkan herba' + (ex ? ' (kecuali ' + ex + ')' : '') + ' ke dalam periuk, tambah air sejuk 2–3 cm di atas paras herba dan rendam selama 30 minit.',
+        pre: j => 'Rebus ' + j + ' DAHULU: didihkan, kemudian reneh 30 minit sebelum memasukkan herba lain.',
+        boil: 'Didihkan dengan api besar, kemudian reneh perlahan dengan api kecil selama 20–30 minit.',
+        late: j => 'Masukkan ' + j + ' hanya pada 5–10 minit TERAKHIR.',
+        second: 'Tapis air rebusan. Tambah air semula (sekadar menutupi herba), didihkan dan reneh 15–20 minit untuk rebusan kedua, kemudian tapis.',
+        sep: j => 'Rebus ' + j + ' secara berasingan dalam periuk kecil, kemudian campurkan airnya ke dalam air rebusan.',
+        mix: n => 'Campurkan kedua-dua rebusan (kira-kira 300–400 ml) dan minum suam' + (n === 1 ? ' sekali gus.' : ', dibahagikan kepada ' + n + ' kali.'),
+        melt: j => 'Jangan rebus ' + j + ': letakkan dalam cawan dan kacau dengan air rebusan panas sehingga larut.',
+        stir: j => 'Jangan rebus ' + j + ': kacau ke dalam air rebusan suam semasa diminum.'
+      },
+      noRxTitle: 'Belum ada preskripsi',
+      noRxText: 'Selepas rawatan, doktor akan menghantar pautan preskripsi kepada anda. Buka pautan itu dan preskripsi akan disimpan di sini — bersama semakan dos harian, cara merebus herba dan tarikh temujanji susulan.',
+      demo: 'Lihat contoh', demoTag: 'Contoh',
+      courseDay: (n, m) => 'Hari ' + n + ' daripada ' + m,
+      upcoming: d => 'Bermula ' + d,
+      courseDone: 'Kursus rawatan selesai',
+      takenOf: (a, b) => a + ' / ' + b + ' dos diambil',
+      guide: 'Cara merebus', timer: 'Pemasa rebusan',
+      followUp: 'Temujanji susulan', fuIn: n => n + ' hari lagi', fuToday: 'Hari ini', fuPast: n => n + ' hari lalu', fuNone: 'Doktor tidak menetapkan tarikh susulan. Anda boleh menetapkannya dalam preskripsi.',
+      toCal: 'Tambah ke kalendar', summary: 'Ringkasan untuk doktor',
+      howFeel: 'Bagaimana perasaan anda hari ini?', moreDiary: 'Tulis lagi',
+      saved: 'Disimpan',
+      feel: ['Sangat teruk', 'Kurang baik', 'Biasa', 'Baik', 'Sangat baik'],
+      sleep: 'Tidur', appetite: 'Selera makan', stool: 'Buang air besar',
+      gfp: { g: 'Baik', f: 'Sederhana', p: 'Kurang' },
+      stoolOpts: { n: 'Normal', d: 'Keras', l: 'Cair', x: 'Tiada' },
+      noteLabel: 'Lain-lain (perubahan simptom, rasa tidak selesa)', notePh: 'cth. Perut kurang kembung, masih sedikit pedih ulu hati selepas makan',
+      tongue: 'Foto lidah', tongueTip: 'Ambil dalam cahaya siang dan julurkan lidah dengan santai. Elakkan sejurus selepas makan atau minum minuman berwarna.', addPhoto: 'Ambil / pilih foto',
+      trend: '14 hari lepas', noData: 'Belum ada rekod',
+      dosesOn: 'Dos pada hari itu',
+      rxList: 'Preskripsi saya', rxEmpty: 'Belum ada preskripsi',
+      status: { active: 'Sedang diambil', upcoming: 'Belum bermula', done: 'Selesai' },
+      herbsN: (n, k) => n + ' herba × ' + k + ' bungkus',
+      usage: 'Cara pengambilan', advice: 'Nasihat doktor', dx: 'Diagnosis', doctor: 'Doktor', date: 'Tarikh preskripsi', patient: 'Pesakit',
+      courseSet: 'Kursus rawatan', startDate: 'Tarikh mula', perDay: 'Berapa kali sehari', fuDate: 'Tarikh susulan',
+      remind: 'Tambah peringatan dos ke kalendar', del: 'Padam preskripsi ini', delConfirm: 'Padam preskripsi ini? Rekod dos akan dipadam (diari dikekalkan).',
+      back: '‹ Kembali',
+      newRx: 'Preskripsi baharu diterima', updRx: 'Preskripsi ini telah dikemas kini', saveRx: 'Simpan', cancel: 'Batal', ok: 'OK',
+      badLink: 'Pautan preskripsi ini tidak lengkap atau rosak. Sila minta doktor menghantarnya semula.',
+      oldBrowser: 'Pelayar anda terlalu lama untuk membuka preskripsi ini. Sila kemas kini atau gunakan Chrome / Safari.',
+      myName: 'Nama saya', lang: 'Bahasa · 语言 · Language', times: 'Masa peringatan',
+      backup: 'Sandaran', exportB: 'Eksport fail sandaran', importB: 'Pulihkan daripada sandaran', clear: 'Padam semua data',
+      clearConfirm: 'Padam semua preskripsi dan diari? Tindakan ini tidak boleh dibatalkan.', importConfirm: 'Gantikan semua data semasa dengan sandaran ini?', importOk: 'Dipulihkan', importBad: 'Ini bukan fail sandaran Care Notebook',
+      install: 'Pasang pada telefon',
+      installIOS: 'iPhone: buka dalam Safari → ketik Kongsi → "Tambah ke Skrin Utama"',
+      installAndroid: 'Android: buka dalam Chrome → menu ⋮ → "Tambah ke skrin utama" / "Pasang aplikasi"',
+      installBtn: 'Pasang', installed: 'Sudah dipasang — buka dari skrin utama seperti aplikasi biasa.',
+      wechat: 'Data mungkin hilang jika dibuka dalam WeChat. Ketik "···" (atas kanan) → "Buka dalam pelayar", kemudian tambah ke skrin utama.',
+      privacy: 'Preskripsi dan diari anda hanya disimpan dalam telefon ini dan tidak dimuat naik ke mana-mana pelayan. Eksport sandaran sebelum menukar telefon.',
+      disclaimer: 'Untuk rekod dan peringatan sahaja — bukan pengganti rawatan doktor. Jika anda berasa tidak sihat semasa mengambil herba, hentikan dan hubungi doktor anda.',
+      copy: 'Salin', share: 'Hantar kepada doktor', copied: 'Disalin — tampal dalam mesej kepada doktor anda',
+      sumHint: 'Hantar ringkasan ini kepada doktor sebelum temujanji susulan.', sumNoRx: 'Belum ada preskripsi, tiada apa untuk diringkaskan.',
+      timerHint: 'Biarkan halaman ini terbuka. Ia akan berbunyi dan bergetar apabila masa tamat.', timerDone: 'Masa tamat!', timerRun: 'Pemasa rebusan', stop: 'Henti', view: 'Lihat', min: 'minit',
+      presets: [[30, 'Rendam / rebus dahulu'], [25, 'Rebusan pertama'], [15, 'Rebusan kedua'], [8, 'Masuk kemudian']],
+      slots: { 1: ['Dos'], 2: ['Pagi', 'Malam'], 3: ['Pagi', 'Tengah hari', 'Malam'] },
+      perDayOpt: n => n + ' kali sehari',
+      calMed: (f, s) => 'Makan ubat herba: ' + f + ' (' + s + ')', calFu: c => 'Temujanji susulan perubatan Cina' + (c ? ' · ' + c : ''),
+      tipsTitle: 'Perhatian',
+      tips: ['Gunakan periuk tanah liat, seramik atau keluli tahan karat — bukan besi atau aluminium.', 'Habiskan air rebusan pada hari yang sama; jika disimpan dalam peti sejuk, panaskan sebelum diminum.', 'Jika anda cirit-birit teruk, ruam atau berdebar-debar, hentikan dan hubungi doktor anda.', 'Ini cara rebusan biasa — sentiasa ikut arahan doktor jika berbeza.'],
+      wd: ['A', 'I', 'S', 'R', 'K', 'J', 'S'],
+      fmtD: s => { const d = parseYmd(s); return d.getDate() + ' ' + MS_MON[d.getMonth()]; },
+      fmtMD: s => { const d = parseYmd(s); return d.getDate() + '/' + (d.getMonth() + 1); },
+      sum: {
+        title: '[Ringkasan susulan]', rx: 'Preskripsi', from: 'ditetapkan', took: (a, b, m) => 'Dos: ' + a + ' daripada ' + b + ' diambil' + (m ? ', ' + m + ' tertinggal' : ''),
+        start: s => 'bermula ' + s, feel: 'Perasaan harian', log: 'Diari', gen: '— daripada Care Notebook', photos: n => 'foto lidah ×' + n
       }
     }
   };
-  // 煎法标注的英文
-  const NOTE_EN = { '先煎': 'cook first', '后下': 'add late', '包煎': 'in a bag', '烊化': 'dissolve', '冲服': 'stir in', '另煎': 'cook separately', '打碎': 'crush' };
 
   /* ---------- 日期 ---------- */
   const pad = n => String(n).padStart(2, '0');
@@ -162,7 +270,8 @@
   const photoGet = id => idb ? req('photos', 'readonly', s => s.get(id)) : Promise.resolve(memPhotos.get(id));
   const photoDel = id => idb ? req('photos', 'readwrite', s => s.delete(id)) : (memPhotos.delete(id), Promise.resolve());
   const photoAll = () => idb ? req('photos', 'readonly', s => s.getAllKeys()) : Promise.resolve(Array.from(memPhotos.keys()));
-  const blank = () => ({ v: 1, lang: /^zh/i.test(navigator.language || 'zh') ? 'zh' : 'en', name: '', times: ['08:30', '13:00', '20:00'], rxs: [], logs: {}, timer: null });
+  // lang 为空 = 第一次打开，先让患者自己选语言
+  const blank = () => ({ v: 1, lang: '', name: '', times: ['08:30', '13:00', '20:00'], rxs: [], logs: {}, timer: null });
   async function load() {
     try { idb = await openIdb(); db = await req('kv', 'readonly', s => s.get('db')); } catch (e) { idb = null; }
     if (!db) { try { db = JSON.parse(localStorage.getItem(LS) || 'null'); } catch (e) { db = null; } }
@@ -208,7 +317,8 @@
     return { due, got, total: courseDays(rx) * rx.perDay };
   }
   const slotNames = rx => L().slots[rx.perDay] || L().slots[2];
-  const herbNote = n => n ? (db.lang === 'en' ? (NOTE_EN[n] || n) : n) : '';
+  const herbNote = n => n ? (L().notes[n] || n) : '';
+  const latin = () => db.lang !== 'zh';  // 英文、马来文用半角标点
 
   /* ---------- 处方链接解码 ---------- */
   const b64uDec = s => { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; const bin = atob(s), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
@@ -244,7 +354,9 @@
     if (h.indexOf('rx=') === 0) return;
     const [r, a] = h.split('/');
     route = r || 'today';
-    document.documentElement.lang = db.lang === 'en' ? 'en' : 'zh-CN';
+    document.body.classList.toggle('pick', !db.lang);
+    if (!db.lang) { view.innerHTML = vPick(); renderBanner(); return; }
+    document.documentElement.lang = db.lang === 'zh' ? 'zh-CN' : db.lang;
     document.querySelectorAll('[data-t]').forEach(el => { el.textContent = t(el.dataset.t); });
     document.querySelectorAll('#tabs a').forEach(el => el.classList.toggle('on', el.dataset.tab === route));
     const html = route === 'rx' ? (a && R(a) ? vRxDetail(R(a)) : vRxList())
@@ -264,7 +376,7 @@
 
   function vToday() {
     const d = today(), rx = current();
-    let h = '<header class="head">' + seal('随') + '<div><h1>' + esc(t('hello', db.name)) + '</h1><p class="sub">' + fmtD(d) + ' · ' + (db.lang === 'en' ? parseYmd(d).toLocaleDateString('en-US', { weekday: 'long' }) : '星期' + L().wd[parseYmd(d).getDay()]) + '</p></div></header>';
+    let h = '<header class="head">' + seal('随') + '<div><h1>' + esc(t('hello', db.name)) + '</h1><p class="sub">' + fmtD(d) + ' · ' + esc(L().weekday(d)) + '</p></div></header>';
     if (!rx) {
       return h + '<section class="card empty">' + seal('方') + '<h2 style="justify-content:center">' + esc(t('noRxTitle')) + '</h2><p class="muted">' + esc(t('noRxText')) + '</p><div class="acts"><button class="btn primary" data-act="demo">' + esc(t('demo')) + '</button></div></section>';
     }
@@ -303,27 +415,25 @@
 
   function guideSteps(rx) {
     const by = n => rx.herbs.filter(h => h.note === n).map(h => h.name);
-    const j = a => a.join(db.lang === 'en' ? ', ' : '、');
+    const j = a => a.join(L().listSep), G = L().g, s = [];
     const pre = by('先煎'), late = by('后下'), bag = by('包煎'), melt = by('烊化'), stir = by('冲服'), sep = by('另煎'), crush = by('打碎');
     const notInPot = melt.concat(stir, sep);
-    const en = db.lang === 'en', s = [];
-    if (crush.length) s.push([0, en ? 'Crush ' + j(crush) + ' before cooking.' : j(crush) + ' 煎前先打碎。']);
-    if (bag.length) s.push([1, en ? 'Put ' + j(bag) + ' into a cloth/gauze bag and tie it; cook it with the other herbs.' : j(bag) + ' 装进纱布袋扎紧，和其他药一起煎。']);
-    s.push([0, en ? 'Put the herbs' + (notInPot.length ? ' (except ' + j(notInPot) + ')' : '') + ' in the pot, add cold water 2–3 cm above the herbs and soak for 30 minutes.'
-      : '把药' + (notInPot.length ? '（' + j(notInPot) + ' 除外）' : '') + '放进锅里，加冷水没过药面 2–3 厘米，浸泡 30 分钟。']);
-    if (pre.length) s.push([1, en ? 'Cook ' + j(pre) + ' FIRST: bring to a boil, then simmer 30 minutes before adding the other herbs.' : j(pre) + ' 要先煎：先放进锅里，煮沸后小火煎 30 分钟，再放入其他药。']);
-    s.push([0, en ? 'Bring to a boil on high heat, then simmer gently on low heat for 20–30 minutes.' : '大火煮沸后转小火，保持微微沸腾 20–30 分钟。']);
-    if (late.length) s.push([1, en ? 'Add ' + j(late) + ' only in the LAST 5–10 minutes.' : j(late) + ' 要后下：关火前 5–10 分钟才放进去。']);
-    s.push([0, en ? 'Strain out the liquid. Add water again (just covering the herbs), boil and simmer 15–20 minutes for a second batch, then strain.' : '倒出药液。再加水没过药面，煮沸后小火煎 15–20 分钟，倒出第二遍药液。']);
-    if (sep.length) s.push([1, en ? 'Cook ' + j(sep) + ' separately in a small pot and add its liquid to the decoction.' : j(sep) + ' 用小锅单独煎，取汁兑入药液。']);
-    s.push([0, en ? 'Mix both batches (about 300–400 ml) and drink warm in ' + rx.perDay + (rx.perDay === 1 ? ' serving.' : ' servings.') : '两遍药液混合（约 300–400 毫升），分 ' + rx.perDay + ' 次温服。']);
-    if (melt.length) s.push([1, en ? 'Do not cook ' + j(melt) + ': put it in a cup and stir it into the hot decoction until dissolved.' : j(melt) + ' 不下锅：放在杯里，用热药液搅拌溶化后服。']);
-    if (stir.length) s.push([1, en ? 'Do not cook ' + j(stir) + ': stir it into the warm decoction when drinking.' : j(stir) + ' 不下锅：服药时用温热药液冲服。']);
+    // [是否重点步骤, 文字]
+    if (crush.length) s.push([0, G.crush(j(crush))]);
+    if (bag.length) s.push([1, G.bag(j(bag))]);
+    s.push([0, G.soak(notInPot.length ? j(notInPot) : '')]);
+    if (pre.length) s.push([1, G.pre(j(pre))]);
+    s.push([0, G.boil]);
+    if (late.length) s.push([1, G.late(j(late))]);
+    s.push([0, G.second]);
+    if (sep.length) s.push([1, G.sep(j(sep))]);
+    s.push([0, G.mix(rx.perDay)]);
+    if (melt.length) s.push([1, G.melt(j(melt))]);
+    if (stir.length) s.push([1, G.stir(j(stir))]);
     return s;
   }
 
   function vRxDetail(rx) {
-    const en = db.lang === 'en';
     let h = '<p><a class="btn ghost sm" href="#rx">' + esc(t('back')) + '</a></p>';
     h += '<header class="head">' + seal('方') + '<div><h1>' + esc(rx.formula || '—') + '</h1><p class="sub">' + esc([rx.clinic, rx.doctor].filter(Boolean).join(' · ')) + (rx.demo ? ' <span class="tag">' + esc(t('demoTag')) + '</span>' : '') + '</p></div></header>';
     h += '<section class="card"><h2>' + esc(t('herbsN', rx.herbs.length, rx.doses)) + '<small>' + esc(t('date')) + ' ' + fmtD(dateOfIso(rx.date)) + '</small></h2><div class="herbs">' +
@@ -331,11 +441,11 @@
       (rx.usage ? '<h3>' + esc(t('usage')) + '</h3><p>' + esc(rx.usage) + '</p>' : '') +
       (rx.dx ? '<h3>' + esc(t('dx')) + '</h3><p>' + esc(rx.dx) + '</p>' : '') +
       (rx.advice ? '<h3>' + esc(t('advice')) + '</h3><p class="note info">' + esc(rx.advice) + '</p>' : '') +
-      (rx.name ? '<p class="muted" style="margin-top:10px">' + esc(t('patient')) + '：' + esc(rx.name) + '</p>' : '') + '</section>';
+      (rx.name ? '<p class="muted" style="margin-top:10px">' + esc(t('patient')) + (latin() ? ': ' : '：') + esc(rx.name) + '</p>' : '') + '</section>';
     h += '<section class="card"><h2>' + esc(t('guide')) + '<small><button class="btn sm" data-act="timer">' + esc(t('timer')) + '</button></small></h2><ol class="steps">' +
       guideSteps(rx).map(s => '<li' + (s[0] ? ' class="key"' : '') + '>' + esc(s[1]) + '</li>').join('') + '</ol>' +
       '<h3>' + esc(t('tipsTitle')) + '</h3><ul style="margin:0;padding-left:20px" class="muted">' + L().tips.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>' +
-      (en ? '<p class="muted" style="margin-top:8px">Herb names are kept in Chinese so the pharmacy can match them exactly.</p>' : '') + '</section>';
+      (L().herbNamesNote ? '<p class="muted" style="margin-top:8px">' + esc(L().herbNamesNote) + '</p>' : '') + '</section>';
     h += '<section class="card"><h2>' + esc(t('courseSet')) + '</h2>' +
       '<label class="f"><span>' + esc(t('startDate')) + '</span><input type="date" data-rx="start" data-id="' + esc(rx.id) + '" value="' + rx.start + '"></label>' +
       '<label class="f"><span>' + esc(t('perDay')) + '</span><select data-rx="perDay" data-id="' + esc(rx.id) + '">' + [1, 2, 3].map(n => '<option value="' + n + '"' + (rx.perDay === n ? ' selected' : '') + '>' + esc(t('perDayOpt', n)) + '</option>').join('') + '</select></label>' +
@@ -384,11 +494,17 @@
   let installEvt = null;
   window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; if (route === 'me') render(); });
   const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  // 第一次打开：三种语言一起写，让患者自己选
+  function vPick() {
+    return '<section class="pick-lang">' + seal('随') + '<h1>随诊本 · Care Notebook</h1>' +
+      '<p class="muted">请选择语言<br>Choose your language<br>Pilih bahasa anda</p>' +
+      LANGS.map(l => '<button class="btn block" data-act="lang-pick" data-v="' + l[0] + '">' + esc(l[1]) + '</button>').join('') +
+      '<p class="disclaimer">' + esc(I.zh.disclaimer) + '<br>' + esc(I.en.disclaimer) + '<br>' + esc(I.ms.disclaimer) + '</p></section>';
+  }
   function vMe() {
-    const en = db.lang === 'en';
     let h = '<header class="head">' + seal('我') + '<div><h1>' + esc(t('tabMe')) + '</h1></div></header>';
     h += '<section class="card"><label class="f" style="margin-top:0"><span>' + esc(t('myName')) + '</span><input type="text" maxlength="20" data-set="name" value="' + esc(db.name) + '"></label>' +
-      '<label class="f"><span>' + esc(t('lang')) + '</span></label><div class="lang"><button data-act="lang" data-v="zh" class="' + (en ? '' : 'on') + '">中文</button><button data-act="lang" data-v="en" class="' + (en ? 'on' : '') + '">English</button></div>' +
+      '<label class="f"><span>' + esc(t('lang')) + '</span></label><div class="lang">' + LANGS.map(l => '<button data-act="lang" data-v="' + l[0] + '" class="' + (db.lang === l[0] ? 'on' : '') + '">' + esc(l[1]) + '</button>').join('') + '</div>' +
       '<label class="f"><span>' + esc(t('times')) + '</span></label><div class="times">' + db.times.map((x, i) => '<label>' + esc(L().slots[3][i]) + '<input type="time" data-time="' + i + '" value="' + esc(x) + '"></label>').join('') + '</div></section>';
     h += '<section class="card"><h2>' + esc(t('summary')) + '</h2><p class="muted">' + esc(t('sumHint')) + '</p><div class="acts"><button class="btn zhu" data-act="summary">' + esc(t('summary')) + '</button></div></section>';
     h += '<section class="card"><h2>' + esc(t('install')) + '</h2>' + (standalone() ? '<p class="muted">' + esc(t('installed')) + '</p>'
@@ -418,11 +534,13 @@
   let confirmYes = null;
 
   /* ---------- 收到处方 ---------- */
-  let pending = null;
+  let pending = null, heldRx = '';
   async function checkHash() {
     const h = location.hash;
     if (h.indexOf('#rx=') !== 0) return false;
     history.replaceState(null, '', location.pathname + location.search + '#today');
+    // 还没选语言：先记住这张处方，选完语言再弹出
+    if (!db.lang) { heldRx = h; render(); return true; }
     render();
     try { pending = cleanRx(await decodeRx(h.slice(4))); }
     catch (e) { alertBox(e.message === 'old' ? t('oldBrowser') : t('badLink')); return true; }
@@ -430,7 +548,7 @@
     const start = ex ? ex.start : today();
     modal('<h2>' + seal('方') + esc(ex ? t('updRx') : t('newRx')) + '</h2>' +
       '<p><b>' + esc(p.formula || '—') + '</b>　' + esc(t('herbsN', p.herbs.length, p.doses)) + '</p>' +
-      '<p class="muted">' + esc([p.clinic, p.doctor, fmtD(dateOfIso(p.date))].filter(Boolean).join(' · ')) + (p.name ? '<br>' + esc(t('patient')) + '：' + esc(p.name) : '') + '</p>' +
+      '<p class="muted">' + esc([p.clinic, p.doctor, fmtD(dateOfIso(p.date))].filter(Boolean).join(' · ')) + (p.name ? '<br>' + esc(t('patient')) + (latin() ? ': ' : '：') + esc(p.name) : '') + '</p>' +
       '<label class="f"><span>' + esc(t('startDate')) + '</span><input type="date" id="imp-start" value="' + start + '"></label>' +
       '<div class="acts"><button class="btn" data-act="close">' + esc(t('cancel')) + '</button><button class="btn primary" data-act="import-save">' + esc(t('saveRx')) + '</button></div>');
     return true;
@@ -457,7 +575,7 @@
   /* ---------- 复诊小结 ---------- */
   function summaryText() {
     const rx = current(); if (!rx) return '';
-    const S = L().sum, td = today(), en = db.lang === 'en';
+    const S = L().sum, td = today(), en = latin();
     const tl = tally(rx, td);
     const lines = [S.title + (db.name ? ' ' + db.name : '')];
     lines.push(S.rx + (en ? ': ' : '：') + (rx.formula || '—') + (en ? ' (' : '（') + [rx.doctor, fmtD(dateOfIso(rx.date)) + ' ' + S.from].filter(Boolean).join(' ') + (en ? ')' : '）'));
@@ -470,7 +588,7 @@
       if (l.sleep) bits.push(t('sleep') + (en ? ' ' : '') + L().gfp[l.sleep]);
       if (l.appetite) bits.push(t('appetite') + (en ? ' ' : '') + L().gfp[l.appetite]);
       if (l.stool) bits.push(t('stool') + (en ? ' ' : '') + L().stoolOpts[l.stool]);
-      if (l.photos && l.photos.length) bits.push(en ? 'tongue photo ×' + l.photos.length : '舌象照片 ' + l.photos.length + ' 张');
+      if (l.photos && l.photos.length) bits.push(S.photos(l.photos.length));
       if (l.note) bits.push(l.note.replace(/\s+/g, ' '));
       if (bits.length) rows.push(L().fmtMD(d) + ' ' + bits.join(en ? '; ' : '，'));
     }
@@ -630,6 +748,11 @@
     } else if (a === 'photo-del') {
       const lg = logOf(d); lg.photos = (lg.photos || []).filter(x => x !== id); await photoDel(id); save(); render();
     } else if (a === 'lang') { db.lang = el.dataset.v; save(); render(); }
+    else if (a === 'lang-pick') {
+      db.lang = el.dataset.v; save();
+      if (heldRx) { const h = heldRx; heldRx = ''; history.replaceState(null, '', location.pathname + location.search + h); await checkHash(); }
+      else render();
+    }
     else if (a === 'summary') openSummary();
     else if (a === 'sum-copy') { if (await copyText(summaryText())) toast(t('copied')); }
     else if (a === 'sum-share') { try { await navigator.share({ text: summaryText() }); } catch (err) { /* 用户取消 */ } }
