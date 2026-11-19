@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3E5866">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="随诊本">
+<meta name="robots" content="noindex">
+<title>随诊本 · Care Notebook</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<!-- 每次更新把两个 ?v= 和 sw.js 里的一起改掉，避免手机用旧缓存 -->
+<link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+<div id="banner"></div>
+<main id="view"></main>
+<nav id="tabs">
+  <a href="#today" data-tab="today"><span class="ic">今</span><b data-t="tabToday"></b></a>
+  <a href="#rx" data-tab="rx"><span class="ic">方</span><b data-t="tabRx"></b></a>
+  <a href="#diary" data-tab="diary"><span class="ic">记</span><b data-t="tabDiary"></b></a>
+  <a href="#me" data-tab="me"><span class="ic">我</span><b data-t="tabMe"></b></a>
+</nav>
+<div id="modal" hidden><div class="sheet" id="modal-body"></div></div>
+<div id="toast"></div>
+<script src="app.js?v=2"></script>
+</body>
+</html>
