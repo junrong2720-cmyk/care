@@ -70,7 +70,8 @@
       privacy: '你的处方和日记只保存在这台手机上，不会上传到任何服务器。换手机前请先导出备份。',
       disclaimer: '本应用只用于记录与提醒，不能替代医生诊疗。服药期间如有明显不适，请暂停服药并及时联系医生或就医。',
       copy: '复制', share: '发给医生', copied: '已复制，可以粘贴到微信发给医生',
-      sumHint: '复诊前把这段小结发给医生，方便了解你这段时间的情况。', sumNoRx: '还没有处方，暂时没有可以总结的内容。',
+      sumHint: '复诊前把这段小结发给医生，方便了解你这段时间的情况。',
+      sendFile: '发给医生（含舌象照片）', shareText: '只分享文字', fileHint: '「发给医生」会生成一个文件，里面有这段小结、每天的记录和舌象照片。用 WhatsApp 把这个文件发给医生，医生可以直接导入。', fileSaved: '文件已保存到手机的「下载」里。请打开 WhatsApp，在医生的对话里点 📎 →「文件 / 文档」，选这个文件发送。', sumNoRx: '还没有处方，暂时没有可以总结的内容。',
       timerHint: '计时期间请保持本页打开，时间到会响铃并震动。', timerDone: '时间到了！', timerRun: '煎药计时', stop: '停止', view: '查看', min: '分钟',
       presets: [[30, '浸泡 / 先煎'], [25, '头煎'], [15, '二煎'], [8, '后下']],
       slots: { 1: ['服药'], 2: ['早', '晚'], 3: ['早', '中', '晚'] },
@@ -146,7 +147,8 @@
       privacy: 'Your prescriptions and diary stay on this phone only and are never uploaded. Export a backup before switching phones.',
       disclaimer: 'For record-keeping and reminders only — not a substitute for medical care. If you feel clearly unwell while taking herbs, stop and contact your doctor.',
       copy: 'Copy', share: 'Send to doctor', copied: 'Copied — paste it into a message to your doctor',
-      sumHint: 'Send this summary to your doctor before your follow-up visit.', sumNoRx: 'No prescription yet, nothing to summarize.',
+      sumHint: 'Send this summary to your doctor before your follow-up visit.',
+      sendFile: 'Send to doctor (with photos)', shareText: 'Share text only', fileHint: '"Send to doctor" makes one file with this summary, your daily diary and tongue photos. Send the file to your doctor on WhatsApp — they can import it directly.', fileSaved: 'The file is saved in your Downloads. Open WhatsApp, open the chat with your doctor, tap 📎 → Document, and choose this file.', sumNoRx: 'No prescription yet, nothing to summarize.',
       timerHint: 'Keep this page open. It will ring and vibrate when time is up.', timerDone: "Time's up!", timerRun: 'Cooking timer', stop: 'Stop', view: 'View', min: 'min',
       presets: [[30, 'Soak / cook first'], [25, '1st boil'], [15, '2nd boil'], [8, 'Add late']],
       slots: { 1: ['Dose'], 2: ['Morning', 'Evening'], 3: ['Morning', 'Midday', 'Evening'] },
@@ -222,7 +224,8 @@
       privacy: 'Preskripsi dan diari anda hanya disimpan dalam telefon ini dan tidak dimuat naik ke mana-mana pelayan. Eksport sandaran sebelum menukar telefon.',
       disclaimer: 'Untuk rekod dan peringatan sahaja — bukan pengganti rawatan doktor. Jika anda berasa tidak sihat semasa mengambil herba, hentikan dan hubungi doktor anda.',
       copy: 'Salin', share: 'Hantar kepada doktor', copied: 'Disalin — tampal dalam mesej kepada doktor anda',
-      sumHint: 'Hantar ringkasan ini kepada doktor sebelum temujanji susulan.', sumNoRx: 'Belum ada preskripsi, tiada apa untuk diringkaskan.',
+      sumHint: 'Hantar ringkasan ini kepada doktor sebelum temujanji susulan.',
+      sendFile: 'Hantar kepada doktor (dengan foto)', shareText: 'Kongsi teks sahaja', fileHint: '"Hantar kepada doktor" akan membuat satu fail yang mengandungi ringkasan ini, diari harian dan foto lidah anda. Hantar fail ini kepada doktor melalui WhatsApp — doktor boleh mengimportnya terus.', fileSaved: 'Fail telah disimpan dalam Muat Turun. Buka WhatsApp, pergi ke perbualan doktor, tekan 📎 → Dokumen, dan pilih fail ini.', sumNoRx: 'Belum ada preskripsi, tiada apa untuk diringkaskan.',
       timerHint: 'Biarkan halaman ini terbuka. Ia akan berbunyi dan bergetar apabila masa tamat.', timerDone: 'Masa tamat!', timerRun: 'Pemasa rebusan', stop: 'Henti', view: 'Lihat', min: 'minit',
       presets: [[30, 'Rendam / rebus dahulu'], [25, 'Rebusan pertama'], [15, 'Rebusan kedua'], [8, 'Masuk kemudian']],
       slots: { 1: ['Dos'], 2: ['Pagi', 'Malam'], 3: ['Pagi', 'Tengah hari', 'Malam'] },
@@ -603,13 +606,46 @@
     const txt = summaryText();
     if (!txt) { alertBox(t('sumNoRx')); return; }
     modal('<h2>' + esc(t('summary')) + '</h2><p class="muted">' + esc(t('sumHint')) + '</p><pre class="sum" id="sum-text">' + esc(txt) + '</pre>' +
-      '<div class="acts"><button class="btn" data-act="close">' + esc(t('cancel')) + '</button><button class="btn" data-act="sum-copy">' + esc(t('copy')) + '</button>' + (navigator.share ? '<button class="btn zhu" data-act="sum-share">' + esc(t('share')) + '</button>' : '') + '</div>');
+      '<p class="muted" style="margin-top:10px">' + esc(t('fileHint')) + '</p>' +
+      '<div class="acts"><button class="btn zhu block" data-act="report">' + esc(t('sendFile')) + '</button></div>' +
+      '<div class="acts"><button class="btn" data-act="close">' + esc(t('cancel')) + '</button><button class="btn" data-act="sum-copy">' + esc(t('copy')) + '</button>' + (navigator.share ? '<button class="btn" data-act="sum-share">' + esc(t('shareText')) + '</button>' : '') + '</div>');
   }
   async function copyText(s) {
     try { await navigator.clipboard.writeText(s); return true; } catch (e) {
       const ta = document.createElement('textarea'); ta.value = s; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select();
       let ok = false; try { ok = document.execCommand('copy'); } catch (e2) { ok = false; } ta.remove(); return ok;
     }
+  }
+
+  /* ---------- 发给医生：小结 + 每日记录 + 舌象照片打包成一个文件，医师端「导入患者记录」直接读 ----------
+     文件是 .txt：上面是能直接看的小结，分隔线下面是给医师端读的数据（手机分享只认 txt 这类常见格式） */
+  const REPORT_MARK = '-----CARE-NOTEBOOK-REPORT-----';
+  async function buildReport() {
+    const rx = current(); if (!rx) return null;
+    const td = today(), from = addDays(rx.start, -3), days = [], photos = {};
+    for (let d = from; d <= td; d = addDays(d, 1)) {
+      const l = db.logs[d]; if (!l) continue;
+      const taken = l.taken && l.taken[rx.id] ? takenArr(rx, d).filter(Boolean).length : 0;
+      const pics = (l.photos || []).slice(0, 3);
+      if (!(l.feel || l.sleep || l.appetite || l.stool || l.note || pics.length || taken)) continue;
+      days.push({ d: d, feel: l.feel || 0, sleep: l.sleep || '', appetite: l.appetite || '', stool: l.stool || '', note: l.note || '', taken: taken, photos: pics });
+      for (const id of pics) { const b = await photoGet(id); if (b) photos[id] = await blobToData(b); }
+    }
+    const tl = tally(rx, td);
+    const data = { app: 'care-notebook', kind: 'report', v: 1, at: new Date().toISOString(), lang: db.lang, name: db.name,
+      rx: { id: rx.id, formula: rx.formula, date: rx.date, start: rx.start, perDay: rx.perDay, doses: rx.doses, next: rx.next || '' },
+      got: tl.got, due: tl.due, days: days, photos: photos };
+    const text = summaryText() + '\n\n（医师端：「导入患者记录」打开此文件 / Doctor: open with "Import patient record"）\n' + REPORT_MARK + '\n' + JSON.stringify(data);
+    const nm = (db.name || rx.name || '').replace(/[\\/:*?"<>|\s]+/g, '');
+    return new File([text], 'care-' + (nm ? nm + '-' : '') + td + '.txt', { type: 'text/plain' });
+  }
+  async function sendReport() {
+    const f = await buildReport(); if (!f) { alertBox(t('sumNoRx')); return; }
+    if (navigator.canShare && navigator.canShare({ files: [f] })) {
+      try { await navigator.share({ files: [f], title: t('summary') }); return; }
+      catch (err) { if (err && err.name === 'AbortError') return; }
+    }
+    saveFile(f.name, f); alertBox(t('fileSaved'));
   }
 
   /* ---------- 日历提醒（.ics） ---------- */
@@ -759,6 +795,7 @@
     }
     else if (a === 'summary') openSummary();
     else if (a === 'sum-copy') { if (await copyText(summaryText())) toast(t('copied')); }
+    else if (a === 'report') sendReport();
     else if (a === 'sum-share') { try { await navigator.share({ text: summaryText() }); } catch (err) { /* 用户取消 */ } }
     else if (a === 'ics-med') { const rx = R(id); if (rx) icsMed(rx); }
     else if (a === 'ics-fu') { const rx = R(id); if (rx) icsFu(rx); }
