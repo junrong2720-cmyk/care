@@ -1,13 +1,19 @@
 :root {
-  --paper: #F6F2E8; --card: #FFFDF8; --ink: #202A32; --ink2: #5B6670; --line: #E3DCCB;
+  --paper: #FBF7EE; --card: #FFFDF8; --ink: #202A32; --ink2: #5B6670; --line: #E3DCCB;
   --dai: #3E5866; --dai-soft: #E4EBEE; --zhu: #B8403F; --zhu-soft: #F6E3E0; --ok: #4E7A55; --ok-soft: #E3EFE3;
   --r: 14px;
   font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Helvetica Neue", sans-serif;
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; background: var(--paper); color: var(--ink); }
-body { font-size: 16px; line-height: 1.6; padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
-main { max-width: 560px; margin: 0 auto; padding: calc(12px + env(safe-area-inset-top)) 16px 24px; }
+/* 和医师端处方笺同一套纸面：宣纸底 + 淡色竖排《素问》经文 + 回纹边框 + 细朱线（边框随页面滚动，不压内容） */
+body { font-size: 16px; line-height: 1.6; padding-bottom: calc(72px + env(safe-area-inset-bottom)); position: relative; min-height: 100vh; background: var(--paper) url(bg-jing.svg?v=5) center top / 272px auto repeat; }
+body::before, body::after { content: ""; position: absolute; pointer-events: none; left: 4px; right: 4px; top: calc(4px + env(safe-area-inset-top)); bottom: calc(78px + env(safe-area-inset-bottom)); }
+body::before { border: 10px solid transparent; border-image: url(fret.svg?v=5) 16 round; }
+body::after { left: 16px; right: 16px; top: calc(16px + env(safe-area-inset-top)); bottom: calc(90px + env(safe-area-inset-bottom)); border: 1px solid rgba(184,64,63,.35); }
+body.pick::before { bottom: 4px; }
+body.pick::after { bottom: 16px; }
+main { max-width: 560px; margin: 0 auto; padding: calc(26px + env(safe-area-inset-top)) 24px 28px; position: relative; z-index: 1; }
 h1 { font-size: 24px; margin: 8px 0 2px; letter-spacing: .5px; }
 h2 { font-size: 17px; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
 h2 small { margin-left: auto; font-weight: normal; color: var(--ink2); font-size: 13px; }
@@ -128,6 +134,7 @@ pre.sum { white-space: pre-wrap; font: inherit; font-size: 14px; background: #ff
 .lang button.on { background: var(--dai); color: #fff; }
 body.pick #tabs { display: none; }
 body.pick { padding-bottom: 0; }
+body.pick main { min-height: 100vh; }
 .pick-lang { text-align: center; padding: 12vh 8px 24px; max-width: 360px; margin: 0 auto; }
 .pick-lang .seal { width: 64px; height: 64px; font-size: 38px; border-radius: 16px; }
 .pick-lang h1 { margin: 16px 0 8px; font-size: 22px; }
