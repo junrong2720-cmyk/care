@@ -271,7 +271,7 @@
   const photoDel = id => idb ? req('photos', 'readwrite', s => s.delete(id)) : (memPhotos.delete(id), Promise.resolve());
   const photoAll = () => idb ? req('photos', 'readonly', s => s.getAllKeys()) : Promise.resolve(Array.from(memPhotos.keys()));
   // lang 为空 = 第一次打开，先让患者自己选语言
-  const blank = () => ({ v: 1, lang: '', name: '', times: ['08:30', '13:00', '20:00'], rxs: [], logs: {}, timer: null });
+  const blank = () => ({ v: 1, lang: '', langOk: false, name: '', times: ['08:30', '13:00', '20:00'], rxs: [], logs: {}, timer: null });
   async function load() {
     try { idb = await openIdb(); db = await req('kv', 'readonly', s => s.get('db')); } catch (e) { idb = null; }
     if (!db) { try { db = JSON.parse(localStorage.getItem(LS) || 'null'); } catch (e) { db = null; } }
@@ -285,6 +285,9 @@
   }
 
   const L = () => I[db.lang] || I.zh;
+  // 患者亲手选过语言才算数；旧版本自动设的语言不算，会再请他们选一次
+  const needPick = () => !db.lang || !db.langOk;
+  const LANG_SHORT = { zh: '中文', en: 'EN', ms: 'BM' };
   const t = (k, ...a) => { const v = L()[k]; return typeof v === 'function' ? v(...a) : v; };
 
   /* ---------- 处方：解析服法、疗程 ---------- */
@@ -354,8 +357,8 @@
     if (h.indexOf('rx=') === 0) return;
     const [r, a] = h.split('/');
     route = r || 'today';
-    document.body.classList.toggle('pick', !db.lang);
-    if (!db.lang) { view.innerHTML = vPick(); renderBanner(); return; }
+    document.body.classList.toggle('pick', needPick());
+    if (needPick()) { view.innerHTML = vPick(); renderBanner(); return; }
     document.documentElement.lang = db.lang === 'zh' ? 'zh-CN' : db.lang;
     document.querySelectorAll('[data-t]').forEach(el => { el.textContent = t(el.dataset.t); });
     document.querySelectorAll('#tabs a').forEach(el => el.classList.toggle('on', el.dataset.tab === route));
@@ -376,7 +379,7 @@
 
   function vToday() {
     const d = today(), rx = current();
-    let h = '<header class="head">' + seal('随') + '<div><h1>' + esc(t('hello', db.name)) + '</h1><p class="sub">' + fmtD(d) + ' · ' + esc(L().weekday(d)) + '</p></div></header>';
+    let h = '<header class="head">' + seal('随') + '<div><h1>' + esc(t('hello', db.name)) + '</h1><p class="sub">' + fmtD(d) + ' · ' + esc(L().weekday(d)) + '</p></div><button class="btn sm lang-btn" data-act="lang-open" aria-label="Language">🌐 ' + LANG_SHORT[db.lang] + '</button></header>';
     if (!rx) {
       return h + '<section class="card empty">' + seal('方') + '<h2 style="justify-content:center">' + esc(t('noRxTitle')) + '</h2><p class="muted">' + esc(t('noRxText')) + '</p><div class="acts"><button class="btn primary" data-act="demo">' + esc(t('demo')) + '</button></div></section>';
     }
@@ -540,7 +543,7 @@
     if (h.indexOf('#rx=') !== 0) return false;
     history.replaceState(null, '', location.pathname + location.search + '#today');
     // 还没选语言：先记住这张处方，选完语言再弹出
-    if (!db.lang) { heldRx = h; render(); return true; }
+    if (needPick()) { heldRx = h; render(); return true; }
     render();
     try { pending = cleanRx(await decodeRx(h.slice(4))); }
     catch (e) { alertBox(e.message === 'old' ? t('oldBrowser') : t('badLink')); return true; }
@@ -747,9 +750,10 @@
       const lg = logOf(d), k = el.dataset.k; lg[k] = lg[k] === el.dataset.v ? '' : el.dataset.v; save(); render();
     } else if (a === 'photo-del') {
       const lg = logOf(d); lg.photos = (lg.photos || []).filter(x => x !== id); await photoDel(id); save(); render();
-    } else if (a === 'lang') { db.lang = el.dataset.v; save(); render(); }
+    } else if (a === 'lang') { db.lang = el.dataset.v; db.langOk = true; save(); if (!$('#modal').hidden) closeModal(); render(); }
+    else if (a === 'lang-open') modal('<h2>🌐 语言 · Language · Bahasa</h2>' + LANGS.map(l => '<button class="btn block' + (db.lang === l[0] ? ' primary' : '') + '" style="margin-bottom:10px" data-act="lang" data-v="' + l[0] + '">' + esc(l[1]) + '</button>').join(''));
     else if (a === 'lang-pick') {
-      db.lang = el.dataset.v; save();
+      db.lang = el.dataset.v; db.langOk = true; save();
       if (heldRx) { const h = heldRx; heldRx = ''; history.replaceState(null, '', location.pathname + location.search + h); await checkHash(); }
       else render();
     }
@@ -772,7 +776,7 @@
     else if (a === 'export') exportBackup();
     else if (a === 'clear') confirmBox(t('clearConfirm'), async () => {
       for (const pid of await photoAll()) await photoDel(pid);
-      const lang = db.lang; db = blank(); db.lang = lang; await save(); go('today');
+      const lang = db.lang; db = blank(); db.lang = lang; db.langOk = true; await save(); go('today');
     });
   });
   let noteT;

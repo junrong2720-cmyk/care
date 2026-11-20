@@ -1,6 +1,6 @@
 ﻿/* 离线支持：有网时总是取最新版本并顺手存一份，没网时用存下来的那份。只处理本站自己的文件。 */
-const CACHE = 'care-notebook-v3';
-const FILES = ['./', 'index.html', 'style.css?v=3', 'app.js?v=3', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
+const CACHE = 'care-notebook-v4';
+const FILES = ['./', 'index.html', 'style.css?v=4', 'app.js?v=4', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));

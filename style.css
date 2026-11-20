@@ -23,6 +23,7 @@ p { margin: 6px 0; }
 .seal { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; background: var(--zhu); color: #fff; font-family: "KaiTi", "STKaiti", "Kaiti SC", serif; font-size: 20px; flex: none; }
 .head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
 .head h1 { margin: 0; }
+.head .lang-btn { margin-left: auto; flex: none; white-space: nowrap; }
 .head .sub { margin: 0; }
 
 .btn { appearance: none; border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 10px; padding: 10px 14px; font: inherit; font-size: 15px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; min-height: 44px; }
